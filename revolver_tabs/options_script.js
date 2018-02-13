@@ -69,7 +69,8 @@ function saveAdvancedOptions(callback){
                     "url" : advancedDivs[i].getElementsByClassName("url-text")[0].value,
                     "reload" : divInputTags[3].checked,
                     "seconds" : divInputTags[2].value,
-                    "favIconUrl": advancedDivs[i].getElementsByClassName("icon")[0].src
+                    "favIconUrl": advancedDivs[i].getElementsByClassName("icon")[0].src,
+                    "zoomLevel": divInputTags[4].value
                 });               
            }
         }
@@ -96,15 +97,17 @@ function generateAdvancedSettingsHtml(tab, saved){
         enableHtmlChunk = '<div><input type="checkbox" class="enable" name="enable">',
         iconAndUrlChunk = '<img class="icon" src='+tab.favIconUrl+'\><input class="url-text" type="text" value="'+tab.url+'">',
         secondsChunk = '<p><label for="seconds">Seconds:</label> <input type="text" name="seconds" value="10" style="width:30px;">',
-        reloadChunk = '<label class="inline" for="reload">Reload:</label> <input type="checkbox" name="reload"></p></div>';
+        reloadChunk = '<label class="inline" for="reload">Reload:</label> <input type="checkbox" name="reload">';
+        zoomLevelChunk = '<label class="inline" for="zoomLevel">Zoom Level:</label> <input type="text" name="zoomLevel" value="100%" style="width:34px;"></p></div>'
         if(saved){ 
             enableHtmlChunk = '<div><input type="checkbox" class="enable" name="enable" checked>';
             secondsChunk = '<p><label for="seconds">Seconds:</label> <input type="text" name="seconds" value="'+tab.seconds+'" style="width:30px;">';
             if(tab.reload){
-                reloadChunk = '<label class="inline" for="reload">Reload:</label> <input type="checkbox" name="reload" checked></p></div>';    
+                reloadChunk = '<label class="inline" for="reload">Reload:</label> <input type="checkbox" name="reload" checked>';    
             } 
+            zoomLevelChunk = '<label class="inline" for="zoomLevel">Zoom Level:</label> <input type="text" name="zoomLevel" value="'+tab.zoomLevel+'" style="width:34px;"></p></div>';
         }
-        advancedSettings.innerHTML += enableHtmlChunk + iconAndUrlChunk + secondsChunk + reloadChunk;
+        advancedSettings.innerHTML += enableHtmlChunk + iconAndUrlChunk + secondsChunk + reloadChunk + zoomLevelChunk;
 };
 
 function getCurrentTabs(callback){

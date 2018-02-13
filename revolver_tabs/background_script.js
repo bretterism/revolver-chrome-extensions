@@ -48,7 +48,7 @@ function activateTab(nextTab) {
 			// Switch Tab right away
 			chrome.tabs.update(nextTab.id, {selected: true});
 			setMoverTimeout(tabSetting.windowId, tabSetting.seconds);
-		}	
+		}
 	});
 }
 // Call moveTab if the user isn't interacting with the machine
@@ -115,6 +115,8 @@ function addEventListeners(callback){
 	chrome.tabs.onUpdated.addListener(
 		listeners.onUpdated = function onUpdated(tabId, changeObj, tab){
 			setBadgeStatusOnActiveWindow(tab);
+
+			injectZoomLevel(tab.windowId);
 			if(changeObj.url) createTabsManifest(tab.windowId, function(){
 				return true;
 			});
@@ -123,7 +125,10 @@ function addEventListeners(callback){
 	chrome.tabs.onActivated.addListener(
 		listeners.onActivated = function(tab){
 			checkIfWindowExists(tab.windowId, function(windowExists){
-				if (windowExists == true) setBadgeStatusOnActiveWindow(tab);
+				if (windowExists == true) {
+					setBadgeStatusOnActiveWindow(tab);
+					injectZoomLevel(tab.windowId);
+				}
 			});
 		}
 	);
@@ -155,6 +160,7 @@ function addEventListeners(callback){
 			autoStartIfEnabled(window.id);
 		}
 	);
+
 	return callback();
 };
 // **** Badge Status ****
@@ -202,7 +208,7 @@ function removeTimeout(windowId){
 // If a user closes a window, chrome activates each tab (presumably to close them).  This prevents errors when the onActivated listener 
 // is fired on the tabs being activated to close them.
 function checkIfWindowExists(windowId, callback){		
-	chrome.windows.getAll(function(windows){		
+	chrome.windows.getAll(function(windows){
 		for(var i=0;i<windows.length;i++){		
 			if(windows[i].id === windowId){		
 				return callback(true);		
@@ -237,6 +243,7 @@ function assignAdvancedSettings(tabs, callback) {
 			if(advSettings[i].url == tabs[y].url) {
 				tabs[y].reload = advSettings[i].reload;
 				tabs[y].seconds = advSettings[i].seconds;
+				tabs[y].zoomLevel = advSettings[i].zoomLevel;
 			}
 		}	
 	}
@@ -322,4 +329,31 @@ function updateSettings(){
 			});
 		});
 	});
+}
+// Injects the zoom level (set in the advanced settings)
+function injectZoomLevel(windowId) {
+	chrome.tabs.query({windowId: windowId, active: true}, function(tabs) {
+
+		var tab = tabs[0];
+		if (tab.windowId !== undefined) {
+			if (windowStatus[tab.windowId] == "on" || windowStatus[tab.windowId] == "pause") {
+				var windowIdStr = windowId.toString();
+				grabTabSettings(windowIdStr, tab, function(tabSetting) {
+
+					if (tabSetting.hasOwnProperty('zoomLevel')) {
+						// Checking if zoomLevel is a number. Adding percent (%) if match.
+						if (/^\d+$/.test(tabSetting.zoomLevel)) {
+							tabSetting.zoomLevel += '%';
+						}
+						var zoomStr = 'document.body.style.zoom = \''+ tabSetting.zoomLevel + '\';';
+						chrome.tabs.executeScript(tab.id, { code: zoomStr }, function() {
+							return true;
+						});
+					}
+				});
+			}
+		}
+	});
+
+	return false;
 }
